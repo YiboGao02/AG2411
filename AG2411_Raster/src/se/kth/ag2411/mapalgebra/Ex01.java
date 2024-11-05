@@ -4,7 +4,7 @@ import java.io.File;
 public class Ex01 {
     public static void main(String[] args) {
 
-        args = new String[]{"ForATest","src\\rastert_develop1.asc", "outputs.txt"};
+        //args = new String[]{"ForATest","src\\raster3x4.txt", "outputs.txt"};
         File inputFile = new File(args[1]);
         if (!inputFile.exists()) {
             System.out.println("File do not exist");

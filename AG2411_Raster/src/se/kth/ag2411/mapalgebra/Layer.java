@@ -19,6 +19,10 @@ public class Layer {
     public double nullValue; // value designated as "No data"
     //Constructor (This is not complete)
 
+    public int actual_Row = 0;
+    public int actual_Col = 0;
+    //here we store the actual row and column in the inconsistent data
+
     public Layer(String layerName, String fileName) {
         
         this.name = layerName;
@@ -44,9 +48,13 @@ public class Layer {
             //read the remaining lines
             String dataRow = bReader.readLine();
             int count = 0;
+
             while(dataRow != null){
 
                 String[] subStrings  = dataRow.split(" ");
+                
+                actual_Col = subStrings.length; //count the actual column in inconsistent data
+                //System.out.println(actual_Col);
 
                 for (String value : subStrings) {
                     this.values[count] = Double.parseDouble(value);
@@ -55,7 +63,10 @@ public class Layer {
                 //print the data on console
                 //System.out.println("this is the "+ count +" line" + dataRow);
                 dataRow = bReader.readLine();
+                
+                actual_Row++; //count the actual row in inconsistent data
             }
+            //System.out.println(actual_Row);
 
             bReader.close();
         
@@ -74,9 +85,9 @@ public class Layer {
         System.out.println("cellsize "+resolution);
         System.out.println("NODATA_value " + nullValue);
 
-        for (int i = 0; i < nRows; i++) {
-            for (int j = 0; j < nCols; j++) {
-                System.out.print(values[i*nCols+j]+" ");
+        for (int i = 0; i < actual_Row; i++) {
+            for (int j = 0; j < actual_Col; j++) {
+                System.out.print(values[i*actual_Col+j]+" ");
             }
             System.out.println();
         }
@@ -98,9 +109,9 @@ public class Layer {
             fWriter.write("NODATA_value  "+nullValue+"\n");
 
             //Write the data
-            for (int i = 0; i < nRows; i++) {
-                for (int j = 0; j < nCols; j++) {
-                    fWriter.write(values[i*nCols + j]+" ");
+            for (int i = 0; i < actual_Row; i++) {
+                for (int j = 0; j < actual_Col; j++) {
+                    fWriter.write(values[i*actual_Col + j]+" ");
                 }
                 fWriter.write("\n");
             }
