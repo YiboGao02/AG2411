@@ -1,11 +1,16 @@
 package se.kth.ag2411.mapalgebra;
 
 import java.util.Scanner;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 
 public class Layer {
 
@@ -120,6 +125,87 @@ public class Layer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+
+    //
+    public BufferedImage toImage() {
+
+            BufferedImage image = new BufferedImage(actual_Col, actual_Row, BufferedImage.TYPE_INT_RGB);
+            WritableRaster raster = image.getRaster();
+
+            //find the min and max value in values list
+            double min = Double.POSITIVE_INFINITY;
+            double max = Double.NEGATIVE_INFINITY;
+            for(double value : values){
+                if(value != nullValue){ //ignore the null value
+                    if(value < min){
+                        min = value;
+                    }
+                    if(value > max){
+                        max = value;
+                    }
+                }
+            }
+
+            for(int i = 0; i < actual_Row; i++){
+                for(int j = 0; j < actual_Col; j++){
+                    
+                    int temp_finder = i * actual_Col + j;
+                    double temp_value = values[temp_finder];
+                    int gray = 0;
+
+                    if(temp_value != nullValue){
+                        //convert the value to gray scale
+                        //the largest is black and the smallest is white
+                        gray = (int) (255 * (max - temp_value) / (max - min));
+                    }
+
+                    int[] gray_color = {gray, gray, gray};
+                    raster.setPixel(j, i, gray_color);
+                    //set the pixel at (j,i) to its converted gray scale value
+                }
+            }
+            return image;
+    }
+
+    public BufferedImage toImage(double[] value_of_interest){
+       
+        BufferedImage image = new BufferedImage(actual_Col, actual_Row, BufferedImage.TYPE_INT_RGB);
+        WritableRaster raster = image.getRaster();
+
+        Map<Double, int[]> colorMap = new HashMap<Double, int[]>();
+        Random random = new Random();
+
+        //assign a random color to each value of intrerest
+        for(double value : value_of_interest){
+            int r = random.nextInt(256);
+            int g = random.nextInt(256);
+            int b = random.nextInt(256);
+            colorMap.put(value, new int[]{r, g, b});
+        }
+
+        for(int i = 0; i < actual_Row; i++){
+            for(int j = 0; j < actual_Col; j++){
+                int temp_finder = i * actual_Col + j;
+                double temp_value = values[temp_finder];
+                int[] color = null;
+                
+                if(temp_value == nullValue){
+                    //if the value is null, set the pixel to white
+                    color = new int[]{255, 255, 255};
+                } else if (colorMap.containsKey(temp_value)) {
+                    //if the value is in the colorMap, set the pixel to the color
+                    color = colorMap.get(temp_value);
+                } else {
+                    //if the value is not in the colorMap, set the pixel to black
+                    color = new int[]{255, 255, 255};
+                }
+
+                raster.setPixel(j, i, color);
+            }
+        }
+        return image;
     }
 
 

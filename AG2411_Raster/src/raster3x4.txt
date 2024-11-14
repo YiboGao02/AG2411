@@ -1,5 +1,5 @@
-ncols         10
-nrows         9
+ncols         4
+nrows         3
 xllcorner     0
 yllcorner     0
 cellsize      10
