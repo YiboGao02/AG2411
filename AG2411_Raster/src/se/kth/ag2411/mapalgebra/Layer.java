@@ -158,7 +158,15 @@ public class Layer {
                     if(temp_value != nullValue){
                         //convert the value to gray scale
                         //the largest is black and the smallest is white
-                        gray = (int) (255 * (max - temp_value) / (max - min));
+                        
+                        //gray = (int) (255 * (max - temp_value) / (max - min));
+                        
+                        //when max == min give 128 to that pixel
+                        if(max == min){
+                            gray = 128;
+                        } else{
+                            gray = (int) (255 * (max - temp_value) / (max - min));
+                        }
                     }
 
                     int[] gray_color = {gray, gray, gray};
@@ -175,6 +183,7 @@ public class Layer {
         WritableRaster raster = image.getRaster();
 
         Map<Double, int[]> colorMap = new HashMap<Double, int[]>();
+        
         Random random = new Random();
 
         //assign a random color to each value of intrerest
@@ -198,7 +207,7 @@ public class Layer {
                     //if the value is in the colorMap, set the pixel to the color
                     color = colorMap.get(temp_value);
                 } else {
-                    //if the value is not in the colorMap, set the pixel to black
+                    //if the value is not in the colorMap, set the pixel to white
                     color = new int[]{255, 255, 255};
                 }
 
