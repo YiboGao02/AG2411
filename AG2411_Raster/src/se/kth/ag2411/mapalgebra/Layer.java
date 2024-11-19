@@ -1,7 +1,10 @@
 package se.kth.ag2411.mapalgebra;
 
-import java.util.Scanner;
+import java.util.Set;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.io.BufferedReader;
@@ -90,15 +93,15 @@ public class Layer {
         System.out.println("cellsize "+resolution);
         System.out.println("NODATA_value " + nullValue);
 
-        for (int i = 0; i < actual_Row; i++) {
-            for (int j = 0; j < actual_Col; j++) {
-                System.out.print(values[i*actual_Col+j]+" ");
+        for (int i = 0; i < nRows; i++) {
+            for (int j = 0; j < nCols; j++) {
+                System.out.print(values[i*nCols+j]+" ");
             }
             System.out.println();
         }
     }
 
-    // Save (This is not complete)
+    //
     public void save(String outputFileName) {
         File file = new File(outputFileName);
         //ASCII data store in file
@@ -114,9 +117,9 @@ public class Layer {
             fWriter.write("NODATA_value  "+nullValue+"\n");
 
             //Write the data
-            for (int i = 0; i < actual_Row; i++) {
-                for (int j = 0; j < actual_Col; j++) {
-                    fWriter.write(values[i*actual_Col + j]+" ");
+            for (int i = 0; i < nRows; i++) {
+                for (int j = 0; j < nCols; j++) {
+                    fWriter.write(values[i*nCols + j]+" ");
                 }
                 fWriter.write("\n");
             }
@@ -131,7 +134,7 @@ public class Layer {
     //
     public BufferedImage toImage() {
 
-            BufferedImage image = new BufferedImage(actual_Col, actual_Row, BufferedImage.TYPE_INT_RGB);
+            BufferedImage image = new BufferedImage(nCols, nRows, BufferedImage.TYPE_INT_RGB);
             WritableRaster raster = image.getRaster();
 
             //find the min and max value in values list
@@ -148,10 +151,10 @@ public class Layer {
                 }
             }
 
-            for(int i = 0; i < actual_Row; i++){
-                for(int j = 0; j < actual_Col; j++){
+            for(int i = 0; i < nRows; i++){
+                for(int j = 0; j < nCols; j++){
                     
-                    int temp_finder = i * actual_Col + j;
+                    int temp_finder = i * nCols + j;
                     double temp_value = values[temp_finder];
                     int gray = 0;
 
@@ -179,7 +182,7 @@ public class Layer {
 
     public BufferedImage toImage(double[] value_of_interest){
        
-        BufferedImage image = new BufferedImage(actual_Col, actual_Row, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = new BufferedImage(nCols, nRows, BufferedImage.TYPE_INT_RGB);
         WritableRaster raster = image.getRaster();
 
         Map<Double, int[]> colorMap = new HashMap<Double, int[]>();
@@ -194,9 +197,9 @@ public class Layer {
             colorMap.put(value, new int[]{r, g, b});
         }
 
-        for(int i = 0; i < actual_Row; i++){
-            for(int j = 0; j < actual_Col; j++){
-                int temp_finder = i * actual_Col + j;
+        for(int i = 0; i < nRows; i++){
+            for(int j = 0; j < nCols; j++){
+                int temp_finder = i * nCols + j;
                 double temp_value = values[temp_finder];
                 int[] color = null;
                 
@@ -217,6 +220,121 @@ public class Layer {
         return image;
     }
 
+    //New Layer method for creating an empty layer to store the output of a map algebra operation
+    public Layer(String name, int nRows, int nCols, double[] origin, double resolution, double nullValue) {
+        
+        this.name = name; // 图层的名称
+        this.nRows = nRows; // 行数
+        this.nCols = nCols; // 列数
+        this.origin = origin; // 起点坐标（一个包含x和y坐标的数组）
+        this.resolution = resolution; // 单元格的分辨率（尺寸大小）
+        this.nullValue = nullValue; // 表示“无数据”的特定值
     
+        // 初始化 values 数组以存储每个单元格的值
+        this.values = new double[nRows * nCols];
+    }
+    
+    public Layer localSum(Layer inLayer, String outLayerName) {
+        //
+        Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
+
+        // 遍历所有单元格索引，对每个单元格的值进行求和
+        for (int i = 0; i < (nRows * nCols); i++) {
+            outLayer.values[i] = values[i] + inLayer.values[i];
+        }
+
+        // 返回包含求和值的输出 Layer 对象
+        return outLayer;
+    }
+
+    public Layer focalVariety(int radius, boolean isSquare, String outLayerName) {
+        //
+        Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
+
+        // 遍历每个单元格
+        for (int i = 0; i < nRows * nCols; i++) {
+            // 使用新的邻域方法获取当前单元格的邻域索引
+            int[] neighbors = neighborhood(i, radius, isSquare);
+
+            // 创建一个集合来存储唯一值
+            Set<Double> uniqueValues = new HashSet<>();
+
+            // 遍历邻域中的每个索引，添加唯一值到集合
+            for (int index : neighbors) {
+                double value = values[index];
+                if (value != nullValue) { // 忽略无数据值
+                    uniqueValues.add(value);
+                }
+            }
+
+            // 将唯一值的数量存入输出图层
+            outLayer.values[i] = uniqueValues.size();
+        }
+
+        return outLayer;
+    }
+
+    //
+    private int[] neighborhood(int index, int radius, boolean isSquare) {
+        
+        List<Integer> neighborIndices = new ArrayList<>();
+
+        // 将一维索引转换为二维的行和列
+        int row = index / nCols;
+        int col = index % nCols;
+
+        // 遍历半径范围内的单元格
+        for (int r = -radius; r <= radius; r++) {
+            for (int c = -radius; c <= radius; c++) {
+                int neighborRow = row + r;
+                int neighborCol = col + c;
+
+                // 检查是否超出边界
+                if (neighborRow >= 0 && neighborRow < nRows && neighborCol >= 0 && neighborCol < nCols) {
+                    // 如果是正方形邻域，直接添加；如果是圆形邻域，检查是否在半径范围内
+                    if (isSquare || (Math.sqrt(r * r + c * c) <= radius)) {
+                        // 将二维索引转换回一维索引并添加到列表中
+                        neighborIndices.add(neighborRow * nCols + neighborCol);
+                    }
+                }
+            }
+        }
+
+        // 将列表转换为数组并返回
+        return neighborIndices.stream().mapToInt(i -> i).toArray();
+    }
+
+    public Layer zonalMinimum(Layer zoneLayer, String outLayerName) {
+        //
+        Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
+
+        // 使用 HashMap 存储每个区域的最小值
+        Map<Double, Double> zoneMinMap = new HashMap<>();
+
+        // 第一次遍历：计算每个区域的最小值
+        for (int i = 0; i < nRows * nCols; i++) {
+            double zone = zoneLayer.values[i];
+            double value = values[i];
+
+            if (value != nullValue) { // 忽略无数据值
+                // 如果该区域尚未记录最小值，或当前值小于已记录的最小值
+                if (!zoneMinMap.containsKey(zone) || value < zoneMinMap.get(zone)) {
+                    zoneMinMap.put(zone, value);
+                }
+            }
+        }
+
+        // 第二次遍历：将最小值分配给每个区域内的单元格
+        for (int i = 0; i < nRows * nCols; i++) {
+            double zone = zoneLayer.values[i];
+            if (zoneMinMap.containsKey(zone)) {
+                outLayer.values[i] = zoneMinMap.get(zone);
+            } else {
+                outLayer.values[i] = nullValue; // 如果该区域没有有效值，则设置为无数据值
+            }
+        }
+
+        return outLayer;
+    }
 
 }

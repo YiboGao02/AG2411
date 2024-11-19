@@ -6,7 +6,7 @@ import java.awt.image.BufferedImage;
 public class Ex02 {
     public static void main(String[] args) {
 
-        args = new String[]{"ForATest","src\\rastert_develop1.asc", "5", "1"};
+        args = new String[]{"ForATest","data\\vegetation.asc", "5", "1"};
 
         // get the input parameters
         String layerName = args[0];
