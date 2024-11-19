@@ -16,7 +16,7 @@ public class Ex03 {
             "output.asc"
         };
     */
-
+    /*
         args = new String[]{
             "focalVariety",
             "data\\vegetation.asc",
@@ -24,6 +24,14 @@ public class Ex03 {
             "5",
             "true"
         };
+    */
+    args = new String[]{
+        "zonalMinimum",
+        "data\\elevation.asc",
+        "data\\vegetation.asc",
+        "output.asc"
+    };
+
 
         // 检查命令行参数数量
         if (args.length < 3) {
