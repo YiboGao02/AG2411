@@ -223,12 +223,12 @@ public class Layer {
     //New Layer method for creating an empty layer to store the output of a map algebra operation
     public Layer(String name, int nRows, int nCols, double[] origin, double resolution, double nullValue) {
         
-        this.name = name; // 图层的名称
-        this.nRows = nRows; // 行数
-        this.nCols = nCols; // 列数
-        this.origin = origin; // 起点坐标（一个包含x和y坐标的数组）
-        this.resolution = resolution; // 单元格的分辨率（尺寸大小）
-        this.nullValue = nullValue; // 表示“无数据”的特定值
+        this.name = name; 
+        this.nRows = nRows; 
+        this.nCols = nCols; 
+        this.origin = origin; 
+        this.resolution = resolution; 
+        this.nullValue = nullValue; 
     
         // 初始化 values 数组以存储每个单元格的值
         this.values = new double[nRows * nCols];
@@ -238,7 +238,7 @@ public class Layer {
         //
         Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
 
-        // 遍历所有单元格索引，对每个单元格的值进行求和
+        
         for (int i = 0; i < (nRows * nCols); i++) {
             outLayer.values[i] = values[i] + inLayer.values[i];
         }
@@ -251,15 +251,14 @@ public class Layer {
         //
         Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
 
-        // 遍历每个单元格
+        
         for (int i = 0; i < nRows * nCols; i++) {
-            // 使用新的邻域方法获取当前单元格的邻域索引
+            
             int[] neighbors = neighborhood(i, radius, isSquare);
 
             // 创建一个集合来存储唯一值
             Set<Double> uniqueValues = new HashSet<>();
-
-            // 遍历邻域中的每个索引，添加唯一值到集合
+            
             for (int index : neighbors) {
                 double value = values[index];
                 if (value != nullValue) { // 忽略无数据值
@@ -267,7 +266,7 @@ public class Layer {
                 }
             }
 
-            // 将唯一值的数量存入输出图层
+           
             outLayer.values[i] = uniqueValues.size();
         }
 
@@ -279,11 +278,11 @@ public class Layer {
         
         List<Integer> neighborIndices = new ArrayList<>();
 
-        // 将一维索引转换为二维的行和列
+       
         int row = index / nCols;
         int col = index % nCols;
 
-        // 遍历半径范围内的单元格
+        
         for (int r = -radius; r <= radius; r++) {
             for (int c = -radius; c <= radius; c++) {
                 int neighborRow = row + r;
@@ -300,7 +299,7 @@ public class Layer {
             }
         }
 
-        // 将列表转换为数组并返回
+       
         return neighborIndices.stream().mapToInt(i -> i).toArray();
     }
 
@@ -308,29 +307,29 @@ public class Layer {
         //
         Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
 
-        // 使用 HashMap 存储每个区域的最小值
+        
         Map<Double, Double> zoneMinMap = new HashMap<>();
 
-        // 第一次遍历：计算每个区域的最小值
+      
         for (int i = 0; i < nRows * nCols; i++) {
             double zone = zoneLayer.values[i];
             double value = values[i];
 
-            if (value != nullValue) { // 忽略无数据值
-                // 如果该区域尚未记录最小值，或当前值小于已记录的最小值
+            if (value != nullValue) { 
+                
                 if (!zoneMinMap.containsKey(zone) || value < zoneMinMap.get(zone)) {
                     zoneMinMap.put(zone, value);
                 }
             }
         }
 
-        // 第二次遍历：将最小值分配给每个区域内的单元格
+        
         for (int i = 0; i < nRows * nCols; i++) {
             double zone = zoneLayer.values[i];
             if (zoneMinMap.containsKey(zone)) {
                 outLayer.values[i] = zoneMinMap.get(zone);
             } else {
-                outLayer.values[i] = nullValue; // 如果该区域没有有效值，则设置为无数据值
+                outLayer.values[i] = nullValue; 
             }
         }
 
