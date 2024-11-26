@@ -4,7 +4,7 @@ public class Ex04 {
     public static void main(String args[]){
         
         args = new String[]{
-            "data\\tgr24031lkA_Project\\testnetwork1.txt",
+            "data\\smallnetwork.txt",
             "output.txt",
         };
        
