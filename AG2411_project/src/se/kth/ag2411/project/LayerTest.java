@@ -6,8 +6,8 @@ import java.awt.image.BufferedImage;
 public class LayerTest {
     public static void main(String[] args) {
         // 从文件中加载测试图层
-        String elevationFileName = "data\\elevation.asc";
-        String vegetationFileName = "data\\vegetation.asc";
+        String elevationFileName = "data//development.asc";
+        String vegetationFileName = "data//vegetation.asc";
         Layer elevationLayer = new Layer("Elevation", elevationFileName);
         Layer vegetationLayer = new Layer("Vegetation", vegetationFileName);
 
