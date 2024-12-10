@@ -13,6 +13,8 @@ import java.util.Random;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 
@@ -692,6 +694,34 @@ public class Layer {
         }
     
         return zoneOutputLayer;
+    }
+
+    public void save(String outputFileName) {
+        File file = new File(outputFileName);
+        //ASCII data store in file
+        try{
+            FileWriter fWriter = new FileWriter(file);
+
+            //Write the header
+            fWriter.write("ncols         "+nCols+"\n");
+            fWriter.write("nrows         "+nRows+"\n");
+            fWriter.write("xllcorner     "+origin[0]+"\n");
+            fWriter.write("yllcorner     "+origin[1]+"\n");
+            fWriter.write("cellsize      "+resolution+"\n");
+            fWriter.write("NODATA_value  "+nullValue+"\n");
+
+            //Write the data
+            for (int i = 0; i < nRows; i++) {
+                for (int j = 0; j < nCols; j++) {
+                    fWriter.write(values[i*nCols + j]+" ");
+                }
+                fWriter.write("\n");
+            }
+            System.out.println("Saved");
+            fWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
