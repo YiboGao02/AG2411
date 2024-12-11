@@ -8,14 +8,20 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.awt.BorderLayout;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.Image;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -29,6 +35,9 @@ public class TestGUI extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private JPanel panel;
+    private JLabel imageLabel;
+    private ImageIcon currentImageIcon;
+    private double zoomFactor = 1.0;
     private JComboBox<String> currentComboBox;
 
     /**
@@ -55,6 +64,9 @@ public class TestGUI extends JFrame {
         getContentPane().setLayout(null);
         initializeComponents();
 
+        //for the right image panel
+        addRightImagePanel();
+
 
         // Image Label
         JLabel lblNewLabel = new JLabel();
@@ -75,6 +87,8 @@ public class TestGUI extends JFrame {
         panel_2.setBounds(291, 606, 903, 160);
         panel_2.setLayout(null); // Use null layout for absolute positioning
         getContentPane().add(panel_2);
+
+
 
         // Add an image to the panel
         JLabel imageLabel = new JLabel();
@@ -251,9 +265,20 @@ public class TestGUI extends JFrame {
         JButton runButton = new JButton("Run");
         runButton.setBounds(200, 150, 80, 30); // Positioned below Layer 2 components
         operationPanel.add(runButton);
-
+        
         runButton.addActionListener(e -> {
-            System.out.println("Local operation executed.");
+            try {
+                String selectedOperation = (String) currentComboBox.getSelectedItem();
+                String layer1Path = layerInputField1.getText();
+                String layer2Path = layerInputField2 != null ? layerInputField2.getText() : null;
+                String outputPath = JOptionPane.showInputDialog(this, "Enter output file path:");
+        
+                LayerProcessor processor = new LayerProcessor();
+                processor.processLayer(selectedOperation, new String[]{layer1Path, layer2Path}, outputPath, null, null);
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
         });
         
         // Add Clear button
@@ -317,7 +342,20 @@ public class TestGUI extends JFrame {
         operationPanel.add(runButton);
 
         runButton.addActionListener(e -> {
-            System.out.println("Zonal operation executed.");
+            try {
+                String selectedOperation = (String) currentComboBox.getSelectedItem();
+                String layerPath = layerInputField.getText();
+                String radiusText = radiusInputField.getText();
+                String outputPath = JOptionPane.showInputDialog(this, "Enter output file path:");
+
+                int radius = Integer.parseInt(radiusText);
+                boolean isSquare = rectangleButton.isSelected();
+
+                LayerProcessor processor = new LayerProcessor();
+                processor.processLayer(selectedOperation, new String[]{layerPath}, outputPath, radius, isSquare);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
         });
         
         // Add Clear button
@@ -379,7 +417,18 @@ public class TestGUI extends JFrame {
         operationPanel.add(runButton);
 
         runButton.addActionListener(e -> {
-            System.out.println("Zonal operation executed.");
+            try {
+                String selectedOperation = (String) currentComboBox.getSelectedItem();
+                String layer1Path = layerInputField1.getText();
+                String layer2Path = layerInputField2.getText();
+                String outputPath = JOptionPane.showInputDialog(this, "Enter output file path:");
+
+                LayerProcessor processor = new LayerProcessor();
+                processor.processLayer(selectedOperation, new String[]{layer1Path, layer2Path}, outputPath, null, null);
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
         });
         
         // Add Clear button
@@ -480,4 +529,43 @@ public class TestGUI extends JFrame {
         // Display the window
         gameWindow.setVisible(true);
     }
+
+    private void addRightImagePanel() {
+        JPanel displayPanel = new JPanel(new BorderLayout());
+        displayPanel.setBounds(290, 184, 900,420); // Adjusted position and size for right panel
+        getContentPane().add(displayPanel);
+
+        imageLabel = new JLabel("No Image Loaded", SwingConstants.CENTER);
+        displayPanel.add(new JScrollPane(imageLabel), BorderLayout.CENTER);
+
+        // Add mouse wheel listener for zooming functionality
+        imageLabel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (currentImageIcon != null) {
+                    int notches = e.getWheelRotation();
+                    if (notches < 0) {
+                        zoomFactor *= 1.1; // zoom in
+                    } else {
+                        zoomFactor /= 1.1; // zoom out
+                    }
+                    scaleImage();
+                }
+            }
+        });
+    }
+
+    private void loadImage(String imagePath) {
+        currentImageIcon = new ImageIcon(imagePath);
+        zoomFactor = 1.0; // Reset zoom factor
+        scaleImage();
+    }
+
+    private void scaleImage() {
+        int newWidth = (int) (currentImageIcon.getIconWidth() * zoomFactor);
+        int newHeight = (int) (currentImageIcon.getIconHeight() * zoomFactor);
+        Image scaledImage = currentImageIcon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+        imageLabel.setIcon(new ImageIcon(scaledImage));
+    }
+
 }

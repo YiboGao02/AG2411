@@ -387,32 +387,48 @@ public class Layer {
         return outLayer;
     }
 
-    public double focalMaximum(int radius, boolean isSquare, String outLayerName) {
+    public Layer focalMaximum(int radius, boolean isSquare, String outLayerName) {
         Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
-        outLayer.focalSum(radius, isSquare, outLayerName);
-        double max = values[0][0];
+
         for (int i = 0; i < nRows; i++) {
             for (int j = 0; j < nCols; j++) {
-                if (max < values[i][j]) {
-                    max = values[i][j];
+                int[] neighborIndices = neighbourhood(i, j, radius, isSquare);
+                double maximum = Double.NEGATIVE_INFINITY;
+
+                for (int index : neighborIndices) {
+                    int row = index / nCols;
+                    int col = index % nCols;
+                    if (values[row][col] > maximum) {
+                        maximum = values[row][col];
+                    }
                 }
+                outLayer.values[i][j] = maximum;
             }
         }
-        return max;
+
+        return outLayer;
     }
 
-    public double focalMinimum(int radius, boolean isSquare, String outLayerName) {
+    public Layer focalMinimum(int radius, boolean isSquare, String outLayerName) {
         Layer outLayer = new Layer(outLayerName, nRows, nCols, origin, resolution, nullValue);
-        outLayer.focalSum(radius, isSquare, outLayerName);
-        double min = values[0][0];
+
         for (int i = 0; i < nRows; i++) {
             for (int j = 0; j < nCols; j++) {
-                if (min > values[i][j]) {
-                    min = values[i][j];
+                int[] neighborIndices = neighbourhood(i, j, radius, isSquare);
+                double minimum = Double.POSITIVE_INFINITY;
+
+                for (int index : neighborIndices) {
+                    int row = index / nCols;
+                    int col = index % nCols;
+                    if (values[row][col] < minimum) {
+                        minimum = values[row][col];
+                    }
                 }
+                outLayer.values[i][j] = minimum;
             }
         }
-        return min;
+
+        return outLayer;
     }
 
     public Layer focalSlope(String outLayerName) {
@@ -699,21 +715,21 @@ public class Layer {
     public void save(String outputFileName) {
         File file = new File(outputFileName);
         //ASCII data store in file
-        try{
+        try {
             FileWriter fWriter = new FileWriter(file);
-
-            //Write the header
-            fWriter.write("ncols         "+nCols+"\n");
-            fWriter.write("nrows         "+nRows+"\n");
-            fWriter.write("xllcorner     "+origin[0]+"\n");
-            fWriter.write("yllcorner     "+origin[1]+"\n");
-            fWriter.write("cellsize      "+resolution+"\n");
-            fWriter.write("NODATA_value  "+nullValue+"\n");
-
-            //Write the data
+    
+            // Write the header
+            fWriter.write("ncols         " + nCols + "\n");
+            fWriter.write("nrows         " + nRows + "\n");
+            fWriter.write("xllcorner     " + origin[0] + "\n");
+            fWriter.write("yllcorner     " + origin[1] + "\n");
+            fWriter.write("cellsize      " + resolution + "\n");
+            fWriter.write("NODATA_value  " + nullValue + "\n");
+    
+            // Write the data using the 2D values array
             for (int i = 0; i < nRows; i++) {
                 for (int j = 0; j < nCols; j++) {
-                    fWriter.write(values[i*nCols + j]+" ");
+                    fWriter.write(values[i][j] + " ");
                 }
                 fWriter.write("\n");
             }
@@ -723,5 +739,6 @@ public class Layer {
             e.printStackTrace();
         }
     }
+    
 
 }
