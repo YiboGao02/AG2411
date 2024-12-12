@@ -692,6 +692,4 @@ public class TestGUI extends JFrame {
         }
     }
     
-    
-
 }
