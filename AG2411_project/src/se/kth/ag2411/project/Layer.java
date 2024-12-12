@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 
+
 public class Layer {
 
     // Attributes (This is complete)

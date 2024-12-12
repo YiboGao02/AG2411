@@ -8,7 +8,12 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.BufferedReader;
 import java.awt.BorderLayout;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
+
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.Image;
@@ -27,6 +32,10 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseMotionAdapter;
 
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -270,16 +279,39 @@ public class TestGUI extends JFrame {
             try {
                 String selectedOperation = (String) currentComboBox.getSelectedItem();
                 String layer1Path = layerInputField1.getText();
-                String layer2Path = layerInputField2 != null ? layerInputField2.getText() : null;
-                String outputPath = JOptionPane.showInputDialog(this, "Enter output file path:");
+                String layer2Path = layerInputField2.getText();
         
+                // Validate inputs
+                if (layer1Path.isEmpty() || layer2Path.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Please fill in all required fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+        
+                // Open file chooser for output path
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Select Save Path");
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                int result = fileChooser.showSaveDialog(this);
+                if (result != JFileChooser.APPROVE_OPTION) {
+                    return; // User canceled
+                }
+                String outputPath = fileChooser.getSelectedFile().getAbsolutePath();
+        
+                // Process local operation
                 LayerProcessor processor = new LayerProcessor();
                 processor.processLayer(selectedOperation, new String[]{layer1Path, layer2Path}, outputPath, null, null);
-
+        
+                // Load and display the resulting image
+                Layer resultLayer = new Layer("Result Layer", outputPath);
+                BufferedImage resultImage = resultLayer.toImage();
+                updateRightImagePanel(resultImage);
+        
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Processing Error", JOptionPane.ERROR_MESSAGE);
             }
         });
+        
+        
         
         // Add Clear button
         JButton clearButton = new JButton("Clear");
@@ -346,17 +378,40 @@ public class TestGUI extends JFrame {
                 String selectedOperation = (String) currentComboBox.getSelectedItem();
                 String layerPath = layerInputField.getText();
                 String radiusText = radiusInputField.getText();
-                String outputPath = JOptionPane.showInputDialog(this, "Enter output file path:");
-
+        
+                // Validate inputs
+                if (layerPath.isEmpty() || radiusText.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Please fill in all required fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+        
                 int radius = Integer.parseInt(radiusText);
                 boolean isSquare = rectangleButton.isSelected();
-
+        
+                // Open file chooser for output path
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Select Save Path");
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                int result = fileChooser.showSaveDialog(this);
+                if (result != JFileChooser.APPROVE_OPTION) {
+                    return; // User canceled
+                }
+                String outputPath = fileChooser.getSelectedFile().getAbsolutePath();
+        
+                // Process focal operation
                 LayerProcessor processor = new LayerProcessor();
                 processor.processLayer(selectedOperation, new String[]{layerPath}, outputPath, radius, isSquare);
+        
+                // Load and display the resulting image
+                Layer resultLayer = new Layer("Result Layer", outputPath);
+                BufferedImage resultImage = resultLayer.toImage();
+                updateRightImagePanel(resultImage);
+        
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Processing Error", JOptionPane.ERROR_MESSAGE);
             }
         });
+        
         
         // Add Clear button
         JButton clearButton = new JButton("Clear");
@@ -421,15 +476,38 @@ public class TestGUI extends JFrame {
                 String selectedOperation = (String) currentComboBox.getSelectedItem();
                 String layer1Path = layerInputField1.getText();
                 String layer2Path = layerInputField2.getText();
-                String outputPath = JOptionPane.showInputDialog(this, "Enter output file path:");
-
+        
+                // Validate inputs
+                if (layer1Path.isEmpty() || layer2Path.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Please fill in all required fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+        
+                // Open file chooser for output path
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Select Save Path");
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                int result = fileChooser.showSaveDialog(this);
+                if (result != JFileChooser.APPROVE_OPTION) {
+                    return; // User canceled
+                }
+                String outputPath = fileChooser.getSelectedFile().getAbsolutePath();
+        
+                // Process zonal operation
                 LayerProcessor processor = new LayerProcessor();
                 processor.processLayer(selectedOperation, new String[]{layer1Path, layer2Path}, outputPath, null, null);
-
+        
+                // Load and display the resulting image
+                Layer resultLayer = new Layer("Result Layer", outputPath);
+                BufferedImage resultImage = resultLayer.toImage();
+                updateRightImagePanel(resultImage);
+        
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Processing Error", JOptionPane.ERROR_MESSAGE);
             }
         });
+        
+        
         
         // Add Clear button
         JButton clearButton = new JButton("Clear");
@@ -530,13 +608,39 @@ public class TestGUI extends JFrame {
         gameWindow.setVisible(true);
     }
 
+    private Point initialClick;
+
     private void addRightImagePanel() {
-        JPanel displayPanel = new JPanel(new BorderLayout());
-        displayPanel.setBounds(290, 184, 900,420); // Adjusted position and size for right panel
+        JPanel displayPanel = new JPanel(null); // Use null layout to control image positioning manually
+        displayPanel.setBounds(290, 184, 900, 420); // Adjust position and size for right panel
         getContentPane().add(displayPanel);
 
         imageLabel = new JLabel("No Image Loaded", SwingConstants.CENTER);
-        displayPanel.add(new JScrollPane(imageLabel), BorderLayout.CENTER);
+        imageLabel.setBounds(0, 0, 900, 420); // Set initial bounds of the image
+        displayPanel.add(imageLabel);
+
+        // Add mouse listener for dragging functionality
+        imageLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                initialClick = e.getPoint(); // Record the initial mouse click position
+            }
+        });
+
+        imageLabel.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                // Get the location of the image label
+                int x = imageLabel.getX();
+                int y = imageLabel.getY();
+
+                // Calculate the new position
+                int deltaX = e.getX() - initialClick.x;
+                int deltaY = e.getY() - initialClick.y;
+
+                imageLabel.setLocation(x + deltaX, y + deltaY); // Update the image label's position
+            }
+        });
 
         // Add mouse wheel listener for zooming functionality
         imageLabel.addMouseWheelListener(new MouseWheelListener() {
@@ -555,6 +659,7 @@ public class TestGUI extends JFrame {
         });
     }
 
+
     private void loadImage(String imagePath) {
         currentImageIcon = new ImageIcon(imagePath);
         zoomFactor = 1.0; // Reset zoom factor
@@ -565,7 +670,28 @@ public class TestGUI extends JFrame {
         int newWidth = (int) (currentImageIcon.getIconWidth() * zoomFactor);
         int newHeight = (int) (currentImageIcon.getIconHeight() * zoomFactor);
         Image scaledImage = currentImageIcon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+    
         imageLabel.setIcon(new ImageIcon(scaledImage));
+    
+        int x = (900 - newWidth) / 2; // 900 is the width of the display panel
+        int y = (420 - newHeight) / 2; // 420 is the height of the display panel
+        imageLabel.setBounds(x, y, newWidth, newHeight);
     }
+    
+
+    private void updateRightImagePanel(BufferedImage image) {
+        if (image != null) {
+            ImageIcon imageIcon = new ImageIcon(image);
+            currentImageIcon = imageIcon;
+            zoomFactor = 1.0; 
+            scaleImage();  
+            imageLabel.setText(""); 
+        } else {
+            imageLabel.setIcon(null); 
+            imageLabel.setText("No Image Loaded"); 
+        }
+    }
+    
+    
 
 }
